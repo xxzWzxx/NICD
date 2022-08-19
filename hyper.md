@@ -6,25 +6,55 @@
 2. 一段时间后loss再次下降且下降较为缓慢，训练足够多的epoch后loss完全不变
 3. gamma越小loss前期的波动越多，但足够多的epoch后loss还是会完全不变
 
-以下为示例：()
+
+
+以下几组参数为例（batch_size 均为 256）：
+
 $lr = 10^{-2}$， gamma = 100:
-![loss1](/home/wangzixiao/learning/NICD/results/loss1.png)
-![result1](/home/wangzixiao/learning/NICD/results/result1.png)
+![loss1](results/loss1.png)<img src="results/result1.png" alt="result1"  />
 
-$lr = 10^{-2}$， gamma = 10:
-![loss2](/home/wangzixiao/learning/NICD/results/loss2.png)
-![result2](/home/wangzixiao/learning/NICD/results/result2.png)
 
-$lr = 10^{-2}$， gamma = 1:
-![loss3](/home/wangzixiao/learning/NICD/results/loss3.png)
-![result3](/home/wangzixiao/learning/NICD/results/result3.png)
 
-$lr = 10^{-3}$， gamma = 100:
-![loss4](/home/wangzixiao/learning/NICD/results/loss4.png)
-![result4](/home/wangzixiao/learning/NICD/results/result4.png)
+$lr = 10^{-2}$， gamma = 10: （gamma较小时波动显著增大）
+![loss2](results/loss2.png)![result2](results/result2.png)
 
-$lr = 10^{-4}$， gamma = 100:
-![loss5](/home/wangzixiao/learning/NICD/results/loss5.png)
-![result5](/home/wangzixiao/learning/NICD/results/result5.png)
 
-当做优化时，降低loss的方法除了最大化 k(X, Y).mean() 之外还有 最小化 k(X, X).mean()， 这也是为什么到了一定程度之后loss不下降的原因：新生成的样本中所有的X数值都相当大，导致rbf_kernel在X的每两个值之间都是0，此时达到最优。看看能不能换一个kernel或者更改一下loss function 使得生成出来的数据必须和目标分布在同一个数值范围内
+
+$lr = 10^{-2}$， gamma = 1: 
+![loss3](results/loss3.png)![result3](results/result3.png)
+
+
+
+$lr = 10^{-3}$， gamma = 100: （learning rate 下降训练足够多的epoch仍然会向上面一样梯度消失）
+
+![loss4](results/loss4.png)![result4](results/result4.png)
+
+
+
+$lr = 10^{-4}$， gamma = 100: （取较小梯度训练10000个epoch，梯度仍然消失）
+![loss5](results/loss5.png)![result5](results/result5.png)
+
+
+
+
+
+**成因分析：**
+
+用训练后的网络处理训练数据X，得到结果Y。计算X与Y之间的mmd距离，公式如下：
+$$
+\sqrt{k(X,X).mean() - 2k(X,Y).mean() + k(Y, Y).mean()}
+$$
+$k(X, X)$ 是个不变的矩阵，可以不用考虑
+
+$k(X, Y)$ 最后得出的结果是一个全为0的矩阵，说明 X 与 Y之间并没有任何相近的数据点
+
+$k(Y, Y)$ 最后得出的结果是一个单位矩阵，说明Y的各个点之间距离都很大。这一点也可以从结果上看出来，Y的每一个点数值都非常大因而导致rbf kernel除了对角线外都是 0
+
+当做优化时，降低loss的方法除了最大化 $k(X, Y).mean()$ 之外还有 最小化 $k(Y, Y).mean()$， 优化器将 $k(Y, Y)$ 里面所有的点数值变得很大，使得 $k(Y, Y)$矩阵中除了对角线之外的值都为0，此时loss就不再降低了，优化器停止优化
+
+
+
+注意到：
+
+在训练初期loss有一个波动的情况，几次达到最低，此时的训练出来的模型产生的Y与原始数据大小应该一致，因此取较小的 lr训练 少量几个epoch，观测结果：
+
