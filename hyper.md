@@ -60,3 +60,13 @@ $k(Y, Y)$ 最后得出的结果是一个单位矩阵，说明Y的各个点之间
 2. 尝试其它kernel
 3. 尝试更小的learning rate，试试在训练初期loss波动的最低取值处选取停止训练，观测结果
 
+
+
+## 1. Different Activations
+
+## 1.1 Tanh
+
+$lr = 10^{-2}$，gamma=100
+
+$lr = 10^{-3}$，gamma=100
+
